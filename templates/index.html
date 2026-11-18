@@ -1,0 +1,90 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>SMS Spam Detector</title>
+<style>
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  body { font-family: Arial, Helvetica, sans-serif; background: #f4f4f4; color: #1a1a1a; }
+  header { background: #0a0a0a; color: #f6f2e9; padding: 28px 20px; text-align: center; }
+  header h1 { font-size: 28px; letter-spacing: 1px; }
+  header h1 span { color: #ff2211; }
+  header p { margin-top: 8px; color: #c9c4b8; font-size: 14px; }
+  main { max-width: 640px; margin: 32px auto; padding: 0 16px 40px; }
+  .card { background: #fff; border-radius: 10px; padding: 24px; box-shadow: 0 2px 10px rgba(0,0,0,0.08); }
+  label { display: block; font-weight: bold; margin-bottom: 8px; }
+  textarea { width: 100%; min-height: 110px; padding: 12px; font-size: 16px; border: 1px solid #ccc; border-radius: 6px; resize: vertical; }
+  button.check { margin-top: 14px; width: 100%; padding: 13px; font-size: 17px; font-weight: bold; color: #fff; background: #ff2211; border: none; border-radius: 6px; cursor: pointer; }
+  button.check:hover { background: #d61c0e; }
+  #result { display: none; margin-top: 20px; padding: 18px; border-radius: 6px; text-align: center; font-size: 22px; font-weight: bold; }
+  #result.spam { display: block; background: #fde8e8; color: #b00020; border: 2px solid #ff2211; }
+  #result.ham { display: block; background: #e6f4ea; color: #137333; border: 2px solid #137333; }
+  #result small { display: block; margin-top: 6px; font-size: 14px; font-weight: normal; }
+  .examples { margin-top: 24px; }
+  .examples h3 { font-size: 15px; margin-bottom: 10px; color: #555; }
+  .chip { display: block; width: 100%; text-align: left; margin-bottom: 8px; padding: 10px 12px; font-size: 14px; background: #fff; border: 1px solid #ddd; border-radius: 6px; cursor: pointer; }
+  .chip:hover { border-color: #ff2211; }
+  footer { text-align: center; color: #888; font-size: 13px; padding-bottom: 24px; }
+</style>
+</head>
+<body>
+<header>
+  <h1>SMS <span>Spam</span> Detector</h1>
+  <p>Type a message and find out whether it is spam or not.</p>
+</header>
+<main>
+  <div class="card">
+    <label for="msg">Message to check</label>
+    <textarea id="msg" placeholder="Paste an SMS message here..."></textarea>
+    <button class="check" id="checkBtn" onclick="checkMessage()">Check Message</button>
+    <div id="result"></div>
+  </div>
+  <div class="examples">
+    <h3>Try an example:</h3>
+    <button class="chip" onclick="fillExample(this)">Congratulations! You won a free prize, claim now</button>
+    <button class="chip" onclick="fillExample(this)">Hey, will you come to class tomorrow?</button>
+    <button class="chip" onclick="fillExample(this)">Dear customer your parcel could not be delivered, pay the redelivery charge today</button>
+    <button class="chip" onclick="fillExample(this)">Aap ne 50000 ka inaam jeeta hai, apna number aur CNIC bhejen</button>
+    <button class="chip" onclick="fillExample(this)">W1n a FR33 pr1ze, c1aim n0w</button>
+  </div>
+</main>
+<footer>ML Mids Project &mdash; SMS Spam Detection with Naive Bayes</footer>
+<script>
+  function fillExample(btn) {
+    document.getElementById('msg').value = btn.textContent;
+    checkMessage();
+  }
+  async function checkMessage() {
+    const msg = document.getElementById('msg').value.trim();
+    const box = document.getElementById('result');
+    if (!msg) { box.className = ''; box.style.display = 'none'; return; }
+    box.className = '';
+    box.style.display = 'block';
+    box.style.background = '#eee';
+    box.style.color = '#333';
+    box.style.border = '2px solid #ccc';
+    box.innerHTML = 'Checking...';
+    try {
+      const res = await fetch('/api/predict', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ message: msg })
+      });
+      const data = await res.json();
+      if (data.result === 'SPAM') {
+        box.className = 'spam';
+        box.innerHTML = 'SPAM<small>This message looks like spam. Do not click links or share personal details.</small>';
+      } else {
+        box.className = 'ham';
+        box.innerHTML = 'HAM &mdash; Not Spam<small>This message looks like a normal message.</small>';
+      }
+    } catch (e) {
+      box.className = '';
+      box.style.display = 'block';
+      box.innerHTML = 'Error: could not reach the server.';
+    }
+  }
+</script>
+</body>
+</html>
